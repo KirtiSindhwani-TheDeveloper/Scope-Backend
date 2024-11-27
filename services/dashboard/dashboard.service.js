@@ -12,7 +12,7 @@ module.exports={
             const transaction=await new sql.Transaction(pool);
             await transaction.begin();
             new sql.Request(transaction)
-            locationId=req.location_id;
+            locationId=req?.location_id;
             // console.log("location id ",locationId);
             
             const query1=`SELECT DealerID from LocationInfo where LocationID=@locationId`;
@@ -582,54 +582,75 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
         try{
             
             var pool=await sql.connect(config);
-            var transaction=new sql.Transaction();
+            var transaction=await new sql.Transaction(pool);
             await transaction.begin()
             new sql.Request(transaction);
-    
+            let responseData;
             const brandId=req?.brand_id;
             const dealerId=req?.dealer_id;
             const locationId=req?.location_id
-            
-            let query=`SELECT DealerID ,LocationID from LocationInfo where 1=1`;
-            let params=[];
-            if(dealerId){
-                query+=' AND DealerID=@dealerId';
-                params.push({name:'dealerId',value:dealerId});
+            let query=''
+            let data={}
+            if(!brandId && !dealerId && !locationId){
+                query='SELECT distinct BrandID ,DealerID from LocationInfo'
+                 result1= await pool.request().query(query);
+                // console.log(locations.recordset)
+                data={
+                    // locations:result1.recordset.LocationID,
+                    dealers:result1.recordset,
+                    brands:result1.recordset
+                }
+                // console.log("data in fetch-data ",data)
+                responseData=await adminDashboardService.getAllDataBasedOnAllBrands(req,data)
             }
-            if(locationId){
-                query+=' AND LocationID=@locationId';
-                params.push({name:'locationId',value:locationId})
-            }
-            if(brandId){
-                query+=' AND brandId=@brandId'
-                params.push({name:'brandId',value:brandId})
-            }
+            else{
 
-            console.log("query ",query)
-           const request= await pool.request();
-            params.forEach(param => {
-                request.input(param.name, param.value);
-            });
-        
-            const result= await request.query(query);
-            // console.log("result of dynamic query ",result.recordset)
-            const data={
-                brandId:brandId,
-                dealers:result.recordset,
-            }
+                query=`SELECT DealerID ,LocationID from LocationInfo where 1=1`;
+                let params=[];
+                if(dealerId){
+                    query+=' AND DealerID=@dealerId';
+                    params.push({name:'dealerId',value:dealerId});
+                }
+                if(locationId){
+                    query+=' AND LocationID=@locationId';
+                    params.push({name:'locationId',value:locationId})
+                }
+                if(brandId){
+                    query+=' AND brandId=@brandId'
+                    params.push({name:'brandId',value:brandId})
+                }
+    
+                console.log("query ",query)
+               const request= await pool.request();
+                params.forEach(param => {
+                    request.input(param.name, param.value);
+                });
             
-            const [partNotInMasterDetails,noOfRequestApprovedDetails, noOfRequestPendingDetails, noOfRequestRejectedDetails] = await Promise.all([
-                adminDashboardService.getPartNotInMaster(req,data),
-                adminDashboardService.getNoOfRequestApproved(req,data),
-                adminDashboardService.getNoOfRequestPending(req,data),
-                adminDashboardService.getNoOfRequestRejected(req,data)
-            ]);
-            const responseData = {
-                partNotInMasterData: partNotInMasterDetails,
-                noOfRequestPendingData: noOfRequestPendingDetails,
-                noOfRequestApprovedData: noOfRequestApprovedDetails,
-                noOfRequestRejectedData: noOfRequestRejectedDetails,
-              };
+                const result= await request.query(query);
+                // console.log("result of dynamic query ",result.recordset)
+                data={
+                    brandId:brandId,
+                    dealers:result.recordset,
+                    locations:locations.recordset
+                }
+
+                const [partNotInMasterDetails,noOfRequestApprovedDetails, noOfRequestPendingDetails, noOfRequestRejectedDetails] = await Promise.all([
+                    adminDashboardService.getPartNotInMaster(req,data),
+                    adminDashboardService.getNoOfRequestApproved(req,data),
+                    adminDashboardService.getNoOfRequestPending(req,data),
+                    adminDashboardService.getNoOfRequestRejected(req,data)
+                ]);
+                 responseData = {
+                    partNotInMasterData: partNotInMasterDetails,
+                    noOfRequestPendingData: noOfRequestPendingDetails,
+                    noOfRequestApprovedData: noOfRequestApprovedDetails,
+                    noOfRequestRejectedData: noOfRequestRejectedDetails,
+                  };
+            }
+             
+            // console.log("data in fetch-data ",data)
+            
+            
               await transaction.commit();              
               return responseData
         }
@@ -663,32 +684,6 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
         }
     },
 
-    getAllInfoBasedOnAllBrands:async function(req){
-
-        try{
- 
-            const [partNotInMasterDetails,noOfRequestApprovedDetails, noOfRequestPendingDetails, noOfRequestRejectedDetails] = await Promise.all([
-
-                // this.getPartNotInMasterOnSelectedLocation(req),
-                // this.getApprovedRequestBasedOnSelectedLocation(req),
-                // this.getPendingRequestOnSelectedLocation(req),
-                // this.getRejectedRequestBasedOnSelectedLocation(req)
-
-            ]);
-            const responseData = {
-                partNotInMasterData: partNotInMasterDetails,
-                noOfRequestPendingData: noOfRequestPendingDetails,
-                noOfRequestApprovedData: noOfRequestApprovedDetails,
-                noOfRequestRejectedData: noOfRequestRejectedDetails,
-              };
-                         
-              return responseData
-        }
-        catch(error){
-            console.log("error ",error.message);
-            
-        }
-    },
 
     getAllInfoBasedOnAllLocations:async function(req){
         try{

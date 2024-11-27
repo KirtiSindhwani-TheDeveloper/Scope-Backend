@@ -17,7 +17,7 @@ router.post('/locations',dashboardController.getLocationsBasedOnDealer)
 router.post('/stock-uploaded-date',dashboardController.getStockUploadOn)
 
 router.post('/fetch-data-locations',dashboardController.getAllInfoBasedOnLocations)
-router.post('/fetch-data-all-locations',dashboardController.getAllInfoBasedOnAllLocations)
+router.get('/fetch-data-all-locations',dashboardController.getAllInfoBasedOnAllLocations)
 
 
 //admin dashboard route

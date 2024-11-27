@@ -1,16 +1,5 @@
 const dashboardService=require('../../services/dashboard/dashboard.service')
 module.exports={
-    // getOrderType:async function(req,res){
-    //     try{
-    //         const result=await dashboardService.getOrderType(req);
-
-    //         res.status(200).json({data:result})
-    //     }
-    //     catch(error){
-    //         res.status(200).json({message:'Not Succesful'})
-    //     }
-    // },
-
     getApprovedBy:async function(req,res){
         try{
             const result=await dashboardService.getApprovedBy(req.body);
