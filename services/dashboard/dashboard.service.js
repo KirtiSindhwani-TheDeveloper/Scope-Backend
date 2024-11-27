@@ -700,14 +700,15 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
                 this.getRejectedRequest(req)
 
             ]);
-            const responseData = {
+            
+            const responseData1 = {
                 partNotInMasterData: partNotInMasterDetails,
                 noOfRequestPendingData: noOfRequestPendingDetails,
                 noOfRequestApprovedData: noOfRequestApprovedDetails,
                 noOfRequestRejectedData: noOfRequestRejectedDetails,
               };
                          
-              return responseData
+              return responseData1
         }
         catch(error){
             console.log("error ",error.message);
