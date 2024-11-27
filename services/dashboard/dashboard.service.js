@@ -701,14 +701,14 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
 
             ]);
             
-            const responseData1 = {
+            const responseData = {
                 partNotInMasterData: partNotInMasterDetails,
                 noOfRequestPendingData: noOfRequestPendingDetails,
                 noOfRequestApprovedData: noOfRequestApprovedDetails,
                 noOfRequestRejectedData: noOfRequestRejectedDetails,
               };
                          
-              return responseData1
+              return responseData
         }
         catch(error){
             console.log("error ",error.message);
