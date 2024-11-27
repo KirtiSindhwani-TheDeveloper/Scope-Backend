@@ -13,6 +13,7 @@ router.post('/approved-by',dashboardController.getApprovedBy);
 // router.get('/part-not-in-master-loc',dashboardController.getPartNotInMasterBasedOnLocation)
 // router.get('/pending-request-loc',dashboardController.getPendingRequestBasedOnLocations)
 router.post('/locations',dashboardController.getLocationsBasedOnDealer)
+
 router.post('/stock-uploaded-date',dashboardController.getStockUploadOn)
 
 router.post('/fetch-data-locations',dashboardController.getAllInfoBasedOnLocations)
