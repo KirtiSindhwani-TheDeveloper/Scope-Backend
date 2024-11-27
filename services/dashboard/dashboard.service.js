@@ -103,60 +103,6 @@ module.exports={
         }
     },
 
-    getPendingRequestOnSelectedLocation:async function(req){
-        try{
-            let pool=await sql.connect(config);
-            let transaction=new sql.Transaction(pool);
-            await transaction.begin();
-            new sql.Request(transaction)
-            locationIdArray=req.location_id;
-            timeBand=req?.timeBand;
-            let dateQuery='';
-            if(timeBand){
-                let band=timeBand.toLowerCase();
-                if(band==='today'){
-                    dateQuery+='AND dateadded =getdate()'; 
-                }
-                else if(band==='yesterday'){
-                    dateQuery += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
-                }
-                else if(band==='last week'){
-                    dateQuery += ' AND dateadded > dateadd(DAY,-7,getdate())';
-                }
-                else{
-                    dateQuery += ' AND dateadded > dateadd(month,-1,getdate()) ';
-                }
-            }
-            const res=await this.getBrandAndDealerBasedOnLocation(locationIdArray);
-            console.log("dealerId",res)
-            dealerId=req.dealer_id;
-            const partNotInMasterData=[]
-            for(let id of res){
-                console.log("id ",id);
-                let pool=await sql.connect(config);
-                dealerId=id.result.DealerID
-                locationId=id.locationId
-                // console.log("location ",locationId);
-                
-                let query1 = 
-`SELECT COUNT(Current_status) as pending_request_count FROM CreateOrderRequestPending_TD001_${dealerId} WHERE LocationID = @locationId AND Current_status='Pending'`
-                query1+=dateQuery;
-                let result=await pool.request()
-                .input('locationId',locationId)
-                .input('dealerId',dealerId)
-                .query(query1);
-                partNotInMasterData.push(result.recordset[0]);
-                // console.log("result ",result.recordset)
-            }
-            await transaction.commit();
-            return partNotInMasterData;
-        }
-        catch(error){
-            console.log("error ",error.message)
-            await transaction.rollback();
-        }
-    },
-
     getRejectedRequest:async function(req,res){
         try{
             let pool=await sql.connect(config)
@@ -219,60 +165,7 @@ module.exports={
         }
     },
     
-    getRejectedRequestBasedOnSelectedLocation:async function(req){
-        try{
-            let pool=await sql.connect(config);
-            let transaction=new sql.Transaction();
-            await transaction.begin();
-            new sql.Request(transaction)
-            locationIdArray=req.location_id;
-            const res=await this.getBrandAndDealerBasedOnLocation(locationIdArray);
-            console.log("dealerId",res)
-            dealerId=req.dealer_id;
-            timeBand=req?.timeBand;
-            let dateQuery='';
-            if(timeBand){
-                let band=timeBand.toLowerCase();
-                if(band==='today'){
-                    dateQuery+='AND dateadded =getdate()'; 
-                }
-                else if(band==='yesterday'){
-                    dateQuery += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
-                }
-                else if(band==='last week'){
-                    dateQuery += ' AND dateadded > dateadd(DAY,-7,getdate())';
-                }
-                else{
-                    dateQuery += ' AND dateadded > dateadd(month,-1,getdate()) ';
-                }
-            }
-            const rejectedRequests=[]
-            for(let id of res){
-                console.log("id ",id);
-                 pool=await sql.connect(config)
-                dealerId=id.result.DealerID
-                locationId=id.locationId
-                // console.log("location ",locationId);
-                 pool=await sql.connect(config);
-                let query1 = `SELECT COUNT(Current_status) as rejected_count  FROM Create_Order_Request_TD001_${dealerId} WHERE LocationID = @locationId AND Current_status = 'Decline'`
-                query1+=dateQuery
-                let result=await pool.request()
-                .input('locationId',locationId)
-                .input('dealerId',dealerId)
-                .query(query1);
-                rejectedRequests.push(result.recordset[0]);
-                console.log("result ",result.recordset[0])
-            }
-            await transaction.commit();
-            return rejectedRequests;
-        }
-        catch(error){
-            console.log("error ",error.message)
-            await transaction.rollback();
-        }
-    },
-
-    getApprovedRequest:async function(req,res){
+     getApprovedRequest:async function(req,res){
         try{
             let pool=await sql.connect(config)
     
@@ -334,139 +227,6 @@ module.exports={
        
     },
 
-    getApprovedRequestBasedOnSelectedLocation:async function(req){
-        try{
-            let pool=await sql.connect(config);
-            let  transaction=await new sql.Transaction(pool);
-            await transaction.begin();
-            new sql.Request(transaction)
-            locationIdArray=req.location_id;
-            const res=await this.getBrandAndDealerBasedOnLocation(locationIdArray);
-            // console.log("dealerId",res)
-            // dealerId=req.dealer_id;
-            timeBand=req?.timeBand;
-            let dateQuery='';
-            if(timeBand){
-                let band=timeBand.toLowerCase();
-                if(band==='today'){
-                    dateQuery+='AND dateadded =getdate()'; 
-                }
-                else if(band==='yesterday'){
-                    dateQuery += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
-                }
-                else if(band==='last week'){
-                    dateQuery += ' AND dateadded > dateadd(DAY,-7,getdate())';
-                }
-                else{
-                    dateQuery += ' AND dateadded > dateadd(month,-1,getdate()) ';
-                }
-            }
-            const approvedRequests=[]
-            for(let id of res){
-                 pool=await sql.connect(config);
-                // console.log("id ",id);
-                dealerId=id.result.DealerID
-                locationId=id.locationId
-                // console.log("location ",locationId);
-                
-                let query1 = `SELECT Count(Current_status) as approved_count FROM Create_Order_Request_TD001_${dealerId} WHERE LocationID = @locationId AND Current_status = 'Approve'`;
-                query1+=dateQuery
-                let result=await pool.request()
-                .input('locationId',locationId)
-                .input('dealerId',dealerId)
-                .query(query1);
-                approvedRequests.push(result.recordset[0]);
-                console.log("result ",result.recordset)
-            }
-            await transaction.commit();
-            return approvedRequests;
-        }
-        catch(error){
-            console.log("error ",error.message)
-            await transaction.rollback();
-        }
-    },
-
-    getPartNotInMasterOnSelectedLocation:async function(req){
-        try{
-            let pool=await sql.connect(config);
-            let transaction=new sql.Transaction(pool);
-            await transaction.begin();
-            new sql.Request(transaction)
-            locationIdArray=req?.location_id;
-            timeBand=req?.timeBand;
-            let dateQuery='';
-            if(timeBand){
-                let band=timeBand.toLowerCase();
-                if(band==='today'){
-                    dateQuery+='AND dateadded =getdate()'; 
-                }
-                else if(band==='yesterday'){
-                    dateQuery += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
-                }
-                else if(band==='last week'){
-                    dateQuery += ' AND dateadded > dateadd(DAY,-7,getdate())';
-                }
-                else{
-                    dateQuery += ' AND dateadded > dateadd(month,-1,getdate()) ';
-                }
-            }
-            const res=await this.getBrandAndDealerBasedOnLocation(locationIdArray);
-            // console.log("dealerId",res)
-            dealerId=req.dealer_id
-            const partNotInMasterData=[]
-            for(let id of res){
-                // console.log("id ",id);
-                 pool=await sql.connect(config);
-                locationId=id.locationId
-                // console.log("location ",locationId);
-                dealerId=id.result.DealerID
-                let query = `SELECT Count(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_${dealerId} WHERE LocationID = @locationId and Yellow_line=1`;
-                query+=dateQuery;
-                let result=await pool.request()
-                .input('locationId',locationId)
-                .input('dealerId',dealerId)
-                .query(query);
-                partNotInMasterData.push(result.recordset[0]);
-                // console.log("result ",result.recordset)
-            }
-            await transaction.commit();
-            // console.log("part not in master ",partNotInMasterData)
-            return partNotInMasterData;
-        }
-        catch(error){
-            console.log("error ",error.message)
-            await transaction.rollback();
-        }
-     
-    },
-
-    getBrandAndDealerBasedOnLocation:async function(idArray){
-        try{
-            var pool= await sql.connect(config);
-            const transaction=new sql.Transaction();
-
-            await transaction.begin();
-            new sql.Request(transaction)
-            const obj=[];
-            for(let id of idArray){
-
-                const query=`Select BrandID, DealerID from LocationInfo where LocationId=@id `
-    
-                const result =await pool.request()
-                .input('id',id)
-                .query(query)
-                obj.push({locationId:id,result:result.recordset[0]});
-                // console.log("",result.recordset)
-            }
-            return obj
-
-        }
-        catch(error){
-            console.log("error in fetching ",error.message)
-        }
-    },
-
     getPartNotInMaster:async function(req){
 
         try{
@@ -526,6 +286,264 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
         }
         
     
+    },
+
+    getRejectedRequestBasedOnSelectedLocation:async function(req){
+        try{
+            let pool=await sql.connect(config);
+            let transaction=new sql.Transaction();
+            await transaction.begin();
+            new sql.Request(transaction)
+            locationIdArray=req.location_id;
+            const res=await this.getBrandAndDealerBasedOnLocation(locationIdArray);
+            console.log("dealerId",res)
+            dealerId=req.dealer_id;
+            timeBand=req?.timeBand;
+            let sum=0;
+            let dateQuery='';
+            if(timeBand){
+                let band=timeBand.toLowerCase();
+                if(band==='today'){
+                    dateQuery+='AND dateadded =getdate()'; 
+                }
+                else if(band==='yesterday'){
+                    dateQuery += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                }
+                else if(band==='last week'){
+                    dateQuery += ' AND dateadded > dateadd(DAY,-7,getdate())';
+                }
+                else{
+                    dateQuery += ' AND dateadded > dateadd(month,-1,getdate()) ';
+                }
+            }
+
+            for(let id of res){
+                console.log("id ",id);
+                 pool=await sql.connect(config)
+                dealerId=id.result.DealerID
+                locationId=id.locationId
+                // console.log("location ",locationId);
+                 pool=await sql.connect(config);
+                let query1 = `SELECT COUNT(Current_status) as rejected_count  FROM Create_Order_Request_TD001_${dealerId} WHERE LocationID = @locationId AND Current_status = 'Decline'`
+                query1+=dateQuery
+                let result=await pool.request()
+                .input('locationId',locationId)
+                .input('dealerId',dealerId)
+                .query(query1);
+                sum+=result.recordset[0].rejected_count;
+                // rejectedRequests.push(result.recordset[0]);
+                // console.log("result ",result.recordset[0])
+            }
+          const  rejectedRequests={
+             rejectedCount:sum
+            }
+            await transaction.commit();
+            return rejectedRequests;
+        }
+        catch(error){
+            console.log("error ",error.message)
+            await transaction.rollback();
+        }
+    },
+
+    getPendingRequestOnSelectedLocation:async function(req){
+        try{
+            let pool=await sql.connect(config);
+            let transaction=new sql.Transaction(pool);
+            await transaction.begin();
+            new sql.Request(transaction)
+            locationIdArray=req.location_id;
+            timeBand=req?.timeBand;
+            let dateQuery='';
+            if(timeBand){
+                let band=timeBand.toLowerCase();
+                if(band==='today'){
+                    dateQuery+='AND dateadded =getdate()'; 
+                }
+                else if(band==='yesterday'){
+                    dateQuery += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                }
+                else if(band==='last week'){
+                    dateQuery += ' AND dateadded > dateadd(DAY,-7,getdate())';
+                }
+                else{
+                    dateQuery += ' AND dateadded > dateadd(month,-1,getdate()) ';
+                }
+            }
+            const res=await this.getBrandAndDealerBasedOnLocation(locationIdArray);
+            console.log("dealerId",res)
+            dealerId=req.dealer_id;
+            let sum=0;
+            for(let id of res){
+                console.log("id ",id);
+                let pool=await sql.connect(config);
+                dealerId=id.result.DealerID
+                locationId=id.locationId
+                // console.log("location ",locationId);
+                
+                let query1 = 
+`SELECT COUNT(Current_status) as pending_request_count FROM CreateOrderRequestPending_TD001_${dealerId} WHERE LocationID = @locationId AND Current_status='Pending'`
+                query1+=dateQuery;
+                let result=await pool.request()
+                .input('locationId',locationId)
+                .input('dealerId',dealerId)
+                .query(query1);
+                sum+=result.recordset[0].pending_request_count
+                partNotInMasterData.push(result.recordset[0]);
+                // console.log("result ",result.recordset)
+            }
+            const pendingRequests={
+            pendingCount:sum
+            }
+
+            await transaction.commit();
+            return pendingRequests;
+        }
+        catch(error){
+            console.log("error ",error.message)
+            await transaction.rollback();
+        }
+    },
+   
+    getApprovedRequestBasedOnSelectedLocation:async function(req){
+        try{
+            let pool=await sql.connect(config);
+            let  transaction=await new sql.Transaction(pool);
+            await transaction.begin();
+            new sql.Request(transaction)
+            locationIdArray=req.location_id;
+            const res=await this.getBrandAndDealerBasedOnLocation(locationIdArray);
+            // console.log("dealerId",res)
+            // dealerId=req.dealer_id;
+            timeBand=req?.timeBand;
+            let sum=0;
+            let dateQuery='';
+            if(timeBand){
+                let band=timeBand.toLowerCase();
+                if(band==='today'){
+                    dateQuery+='AND dateadded =getdate()'; 
+                }
+                else if(band==='yesterday'){
+                    dateQuery += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                }
+                else if(band==='last week'){
+                    dateQuery += ' AND dateadded > dateadd(DAY,-7,getdate())';
+                }
+                else{
+                    dateQuery += ' AND dateadded > dateadd(month,-1,getdate()) ';
+                }
+            }
+          
+            for(let id of res){
+                 pool=await sql.connect(config);
+                // console.log("id ",id);
+                dealerId=id.result.DealerID
+                locationId=id.locationId
+                // console.log("location ",locationId);
+                
+                let query1 = `SELECT Count(Current_status) as approved_count FROM Create_Order_Request_TD001_${dealerId} WHERE LocationID = @locationId AND Current_status = 'Approve'`;
+                query1+=dateQuery
+                let result=await pool.request()
+                .input('locationId',locationId)
+                .input('dealerId',dealerId)
+                .query(query1);
+                sum+=result.recordset[0].approved_count;
+               
+                console.log("result ",result.recordset)
+            }
+            const approvedRequests={
+            approvedCount:sum
+            }
+            await transaction.commit();
+            return approvedRequests;
+        }
+        catch(error){
+            console.log("error ",error.message)
+            await transaction.rollback();
+        }
+    },
+
+    getPartNotInMasterOnSelectedLocation:async function(req){
+        try{
+            let pool=await sql.connect(config);
+            let transaction=new sql.Transaction(pool);
+            await transaction.begin();
+            new sql.Request(transaction)
+            locationIdArray=req?.location_id;
+            timeBand=req?.timeBand;
+            let dateQuery='';
+            if(timeBand){
+                let band=timeBand.toLowerCase();
+                if(band==='today'){
+                    dateQuery+='AND dateadded =getdate()'; 
+                }
+                else if(band==='yesterday'){
+                    dateQuery += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                }
+                else if(band==='last week'){
+                    dateQuery += ' AND dateadded > dateadd(DAY,-7,getdate())';
+                }
+                else{
+                    dateQuery += ' AND dateadded > dateadd(month,-1,getdate()) ';
+                }
+            }
+            const res=await this.getBrandAndDealerBasedOnLocation(locationIdArray);
+            // console.log("dealerId",res)
+            dealerId=req.dealer_id
+            let sum=0;
+            for(let id of res){
+                // console.log("id ",id);
+                 pool=await sql.connect(config);
+                locationId=id.locationId
+                // console.log("location ",locationId);
+                dealerId=id.result.DealerID
+                let query = `SELECT Count(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_${dealerId} WHERE LocationID = @locationId and Yellow_line=1`;
+                query+=dateQuery;
+                let result=await pool.request()
+                .input('locationId',locationId)
+                .input('dealerId',dealerId)
+                .query(query);
+                sum+=result.recordset[0].yellow_line_count;
+                // console.log("result ",result.recordset)
+            }
+            const partNotInMasterData={
+            yellowLineCount:sum
+            }
+            await transaction.commit();
+            // console.log("part not in master ",partNotInMasterData)
+            return partNotInMasterData;
+        }
+        catch(error){
+            console.log("error ",error.message)
+            await transaction.rollback();
+        }
+     
+    },
+
+    getBrandAndDealerBasedOnLocation:async function(idArray){
+        try{
+            var pool= await sql.connect(config);
+            const transaction=new sql.Transaction();
+
+            await transaction.begin();
+            new sql.Request(transaction)
+            const obj=[];
+            for(let id of idArray){
+
+                const query=`Select BrandID, DealerID from LocationInfo where LocationId=@id `
+    
+                const result =await pool.request()
+                .input('id',id)
+                .query(query)
+                obj.push({locationId:id,result:result.recordset[0]});
+                // console.log("",result.recordset)
+            }
+            return obj
+
+        }
+        catch(error){
+            console.log("error in fetching ",error.message)
+        }
     },
 
     getLocationsBasedOnDealer:async function(req){

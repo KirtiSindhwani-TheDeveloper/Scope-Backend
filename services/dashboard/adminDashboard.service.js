@@ -15,12 +15,13 @@ module.exports={
             const orderType=req?.orderType;
             const approvedBy=req?.approvedBy;
             const timeBand=req?.timeBand;
+            let sum=0;
             // const partNotInMasterData=[]
             for(let res of data.dealers){
                 var pool=await sql.connect(config);
                 dealerId=res.DealerID
                 locationId=res.LocationID
-                let query=`SELECT COUNT(Yellow_line) as not_in_master_count FROM Create_order_request_TD001_${dealerId} WHERE 1=1 and yellow_line=1`
+                let query=`SELECT COUNT(Yellow_line) as yellow_count FROM Create_order_request_TD001_${dealerId} WHERE 1=1 and yellow_line=1`
                 let params=[]
                
                 if(locationID){
@@ -61,10 +62,13 @@ module.exports={
                 });
 
                 const result=await request.query(query);
-                partNotInMasterData.push(result.recordset[0]);
+                sum+=result.recordset[0].yellow_line_count;
             }
             // console.log("part not in master data ",partNotInMasterData)
             await transaction.commit();
+            const partNotInMasterData={
+                yellowLineCount:sum
+            }
             return partNotInMasterData;
         }
         catch(error){
@@ -84,7 +88,7 @@ module.exports={
             const orderType=req?.orderType;
             const approvedBy=req?.approvedBy;
             const timeBand=req?.timeBand;
-            const approvedRequest=[];
+            let sum=0;
             const locationID=req.location_id;
             for(let res of data.dealers){
                 var pool=await sql.connect(config);
@@ -132,9 +136,11 @@ module.exports={
                });
 
                const result=await request.query(query);
-                approvedRequest.push(result.recordset[0]);
+              sum+=result.recordset[0].approved_count
             }
-            // console.log("approved request data ",approvedRequest)
+           const approvedRequest={
+                approvedRequest:sum
+           }
             await transaction.commit();
             return approvedRequest;
         }
@@ -154,7 +160,7 @@ module.exports={
             const orderType=req?.orderType;
             const approvedBy=req?.approvedBy;
             const timeBand=req?.timeBand;
-            const approvedRequest=[];
+           let sum=0;
             const locationID=req.location_id;
             for(let res of data.dealers){
                 var pool=await sql.connect(config);
@@ -202,11 +208,15 @@ module.exports={
                });
 
                const result=await request.query(query);
-                approvedRequest.push(result.recordset[0]);
+                sum+=result.recordset[0].pending_count
+            }
+
+            const pendingRequest={
+                pendingRequestCount:sum
             }
             // console.log("approved request data ",approvedRequest)
             await transaction.commit();
-            return approvedRequest;
+            return pendingRequest;
         }
         catch(error){
             console.log("error ",error.message)
@@ -224,7 +234,7 @@ module.exports={
             const orderType=req?.orderType;
             const approvedBy=req?.approvedBy;
             const timeBand=req?.timeBand;
-            const approvedRequest=[];
+            let sum=0;
             const locationID=req.location_id;
             for(let res of data.dealers){
                 var pool=await sql.connect(config);
@@ -272,11 +282,14 @@ module.exports={
                });
 
                const result=await request.query(query);
-                approvedRequest.push(result.recordset[0]);
+                sum+=result.recordset[0].rejected_count
+            }
+            const rejectedRequest={
+                rejectedRequestCount:sum
             }
             // console.log("approved request data ",approvedRequest)
             await transaction.commit();
-            return approvedRequest;
+            return rejectedRequest;
         }
         catch(error){
             console.log("error ",error.message)
