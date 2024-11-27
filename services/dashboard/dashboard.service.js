@@ -74,8 +74,6 @@ module.exports={
             .query(query);
             let sum=0;
             for(let res of result.recordset){
-                await sql.connect(config)
-    
                 locationId=res.LocationID
                 let query1 = `
             SELECT COUNT(Current_status) as pending_count 
@@ -136,7 +134,6 @@ module.exports={
             .query(query);
             let sum=0;
             for(let res of result.recordset){
-                 pool=await sql.connect(config)
                 locationId=res.LocationID
                 let query1 = `
             SELECT COUNT(Current_status) as rejected_count 
@@ -197,7 +194,6 @@ module.exports={
             .input('dealerId',dealerId)
             .query(query);
             for(let res of result.recordset){
-                pool=  await sql.connect(config)
                 locationId=res.LocationID
                  query1 = `
               SELECT Count(Current_status) as approved_count
@@ -260,9 +256,7 @@ module.exports={
             .query(query);
             let sum=0;
             for(let id of result.recordset){
-                // console.log("id ",id);
                 locationId=id.LocationID
-                pool=await sql.connect(config);
                 let query = `
 SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_${dealerId} WHERE LocationID = @locationId and Yellow_line=1
                 `;
@@ -318,8 +312,6 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
             }
 
             for(let id of res){
-                console.log("id ",id);
-                 pool=await sql.connect(config)
                 dealerId=id.result.DealerID
                 locationId=id.locationId
                 // console.log("location ",locationId);
@@ -375,8 +367,6 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
             dealerId=req.dealer_id;
             let sum=0;
             for(let id of res){
-                console.log("id ",id);
-                let pool=await sql.connect(config);
                 dealerId=id.result.DealerID
                 locationId=id.locationId
                 // console.log("location ",locationId);
@@ -435,8 +425,6 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
             }
           
             for(let id of res){
-                 pool=await sql.connect(config);
-                // console.log("id ",id);
                 dealerId=id.result.DealerID
                 locationId=id.locationId
                 // console.log("location ",locationId);
@@ -492,8 +480,6 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
             dealerId=req.dealer_id
             let sum=0;
             for(let id of res){
-                // console.log("id ",id);
-                 pool=await sql.connect(config);
                 locationId=id.locationId
                 // console.log("location ",locationId);
                 dealerId=id.result.DealerID

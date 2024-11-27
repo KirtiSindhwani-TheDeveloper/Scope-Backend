@@ -18,7 +18,6 @@ module.exports={
             let sum=0;
             // const partNotInMasterData=[]
             for(let res of data.dealers){
-                var pool=await sql.connect(config);
                 dealerId=res.DealerID
                 locationId=res.LocationID
                 let query=`SELECT COUNT(Yellow_line) as yellow_count FROM Create_order_request_TD001_${dealerId} WHERE 1=1 and yellow_line=1`
@@ -91,7 +90,6 @@ module.exports={
             let sum=0;
             const locationID=req.location_id;
             for(let res of data.dealers){
-                var pool=await sql.connect(config);
                dealerId=res.DealerID;
                locationId=res.LocationID
                let query=`SELECT COUNT(Current_status) as approved_count FROM Create_Order_Request_TD001_${dealerId} WHERE 1=1 and Current_status='Approve'`
@@ -163,7 +161,6 @@ module.exports={
            let sum=0;
             const locationID=req.location_id;
             for(let res of data.dealers){
-                var pool=await sql.connect(config);
                dealerId=res.DealerID;
                locationId=res.LocationID
                let query=`SELECT COUNT(Current_status) as pending_count FROM CreateOrderRequestPending_TD001_${dealerId} WHERE 1=1 and Current_status='Pending'`
@@ -237,7 +234,6 @@ module.exports={
             let sum=0;
             const locationID=req.location_id;
             for(let res of data.dealers){
-                var pool=await sql.connect(config);
                dealerId=res.DealerID;
                locationId=res.LocationID
                let query=`SELECT COUNT(Current_status) as rejected_count FROM Create_Order_Request_TD001_${dealerId} WHERE 1=1 and Current_status='Decline'`
