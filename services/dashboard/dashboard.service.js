@@ -9,7 +9,7 @@ module.exports={
 
             var pool=await sql.connect(config)
     
-            const transaction=new sql.Transaction();
+            const transaction=await new sql.Transaction(pool);
             await transaction.begin();
             new sql.Request(transaction)
             locationId=req.location_id;
@@ -21,7 +21,7 @@ module.exports={
              
             dealerId=result1.recordset[0].DealerID;
             // console.log("dealer id ",dealerId)
-            const query=`SELECT distinct a.vcFirstName,a.vcLastName,a.bintId_Pk from AdminMaster_GEN a LEFT JOIN Create_Order_Request_TD001_${dealerId} c ON a.bintId_Pk=c.SCSby where BrandID=@brandId and a.btStatus=1 and a.type='A'`;
+            const query=`SELECT distinct a.vcFirstName,a.vcLastName,a.bintId_Pk from AdminMaster_GEN a LEFT JOIN Create_Order_Request_TD001_${dealerId} c ON a.bintId_Pk=c.SCSby where locationID=@locationId and a.btStatus=1 and a.type='A'`;
             const result=await pool.request()
             .input('dealerId',dealerId)
             .input('locationId',locationId).query(query);
@@ -45,7 +45,7 @@ module.exports={
     getPendingRequest:async function(req,res){
         try{
             let pool=await sql.connect(config)
-            const transaction= new sql.Transaction();
+            const transaction= await new sql.Transaction();
             await transaction.begin();
             new sql.Request(transaction)
             dealerId=req.dealer_id;
@@ -72,14 +72,13 @@ module.exports={
             const result=await pool.request()
             .input('dealerId',dealerId)
             .query(query);
-            // console.log("result loc",result.recordset);
-            const pendingRequests=[]
+            let sum=0;
             for(let res of result.recordset){
                 await sql.connect(config)
     
                 locationId=res.LocationID
                 let query1 = `
-            SELECT COUNT(Current_status) as current_status_count 
+            SELECT COUNT(Current_status) as pending_count 
                         FROM CreateOrderRequestPending_TD001_${dealerId} 
                      WHERE LocationID = @locationId AND Current_status = 'Pending'`
                      query1+=dateQuery
@@ -87,7 +86,11 @@ module.exports={
                 .input('dealerId',dealerId)
                 .input('locationId',locationId)
                 .query(query1);
-                pendingRequests.push(result.recordset[0]);
+                sum+=result.recordset[0].pending_count
+                // pendingRequests.push(result.recordset[0]);
+            }
+            const pendingRequests={
+                pendingCount:sum
             }
             // console.log("pending request ",pendingRequests)
             await transaction.commit();
@@ -185,8 +188,7 @@ module.exports={
             const result=await pool.request()
             .input('dealerId',dealerId)
             .query(query);
-            // console.log("result loc",result.recordset);
-            const rejectedRequests=[]
+            let sum=0;
             for(let res of result.recordset){
                  pool=await sql.connect(config)
                 locationId=res.LocationID
@@ -200,7 +202,11 @@ module.exports={
                 .input('dealerId',dealerId)
                 .input('locationId',locationId)
                 .query(query1);
-                rejectedRequests.push(result.recordset[0]);
+                sum+=result.recordset[0].rejected_count
+               
+            }
+            const rejectedRequests={
+                rejectedCount:sum
             }
             // console.log("rejected request ",rejectedRequests)
             await transaction.commit();
@@ -293,17 +299,15 @@ module.exports={
                 }
             }
             const query=`SELECT LocationID from LocationInfo where DealerID=@dealerId`
-
+            let sum=0;
             const result=await pool.request()
             .input('dealerId',dealerId)
             .query(query);
-            // console.log("result loc",result.recordset);
-            const approvedRequests=[]
             for(let res of result.recordset){
                 pool=  await sql.connect(config)
                 locationId=res.LocationID
                  query1 = `
-              SELECT Count(Current_status) as current_status_count
+              SELECT Count(Current_status) as approved_count
                         FROM Create_Order_Request_TD001_${dealerId}
                         WHERE LocationID = @locationId AND Current_status='Approve'
         `;
@@ -312,11 +316,15 @@ module.exports={
                 .input('dealerId',dealerId)
                 .input('locationId',locationId)
                 .query(query1);
-                approvedRequests.push(result.recordset[0]);
+                sum+=result.recordset[0].approved_count
+                // approvedRequests.push(result.recordset[0]);
+            }
+            const approvedRequest={
+                approvedCount:sum
             }
             // console.log("approved request ",approvedRequests)
             await transaction.commit();
-            return approvedRequests;
+            return approvedRequest;
 
         }
         catch(err){
@@ -490,9 +498,7 @@ module.exports={
             const result=await pool.request()
             .input('dealerId',dealerId)
             .query(query);
-            // console.log("result loc",result.recordset);
-            const partNotInMasterData=[]
-            
+            let sum=0;
             for(let id of result.recordset){
                 // console.log("id ",id);
                 locationId=id.LocationID
@@ -505,7 +511,10 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
                 .input('locationId',locationId)
                 // .input('dealerId',dealerId)
                 .query(query);
-                partNotInMasterData.push(result1.recordset[0]);
+                sum+=result1.recordset[0].yellow_line_count;
+            }
+            const partNotInMasterData={
+                partNotInMasterCount:sum
             }
             // console.log("result in partnot ",partNotInMasterData)
             await transaction.commit();
@@ -629,11 +638,6 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
 
     getAllInfoBasedOnLocations:async function(req) {
         try{
-            
-            var pool=await sql.connect(config);
-            var transaction=new sql.Transaction();
-            await transaction.begin()
-            new sql.Request(transaction);  
             const [partNotInMasterDetails,noOfRequestApprovedDetails, noOfRequestPendingDetails, noOfRequestRejectedDetails] = await Promise.all([
 
                 this.getPartNotInMasterOnSelectedLocation(req),
@@ -647,24 +651,18 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
                 noOfRequestPendingData: noOfRequestPendingDetails,
                 noOfRequestApprovedData: noOfRequestApprovedDetails,
                 noOfRequestRejectedData: noOfRequestRejectedDetails,
-              };
-              await transaction.commit();              
+              };            
               return responseData
         }
         catch(error){
             console.log("error ",error.message);
-            await transaction.rollback();
         }
     },
 
     getAllInfoBasedOnAllBrands:async function(req){
 
         try{
-            
-            var pool=await sql.connect(config);
-            var transaction=new sql.Transaction();
-            await transaction.begin()
-            new sql.Request(transaction);  
+ 
             const [partNotInMasterDetails,noOfRequestApprovedDetails, noOfRequestPendingDetails, noOfRequestRejectedDetails] = await Promise.all([
 
                 // this.getPartNotInMasterOnSelectedLocation(req),
@@ -679,12 +677,37 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
                 noOfRequestApprovedData: noOfRequestApprovedDetails,
                 noOfRequestRejectedData: noOfRequestRejectedDetails,
               };
-              await transaction.commit();              
+                         
               return responseData
         }
         catch(error){
             console.log("error ",error.message);
-            await transaction.rollback();
+            
+        }
+    },
+
+    getAllInfoBasedOnAllLocations:async function(req){
+        try{
+            const [partNotInMasterDetails,noOfRequestApprovedDetails, noOfRequestPendingDetails, noOfRequestRejectedDetails] = await Promise.all([
+
+                this.getPartNotInMaster(req),
+                this.getApprovedRequest(req),
+                this.getPendingRequest(req),
+                this.getRejectedRequest(req)
+
+            ]);
+            const responseData = {
+                partNotInMasterData: partNotInMasterDetails,
+                noOfRequestPendingData: noOfRequestPendingDetails,
+                noOfRequestApprovedData: noOfRequestApprovedDetails,
+                noOfRequestRejectedData: noOfRequestRejectedDetails,
+              };
+                         
+              return responseData
+        }
+        catch(error){
+            console.log("error ",error.message);
+            
         }
     }
 

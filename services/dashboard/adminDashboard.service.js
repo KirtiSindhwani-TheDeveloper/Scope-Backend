@@ -15,8 +15,7 @@ module.exports={
             const orderType=req?.orderType;
             const approvedBy=req?.approvedBy;
             const timeBand=req?.timeBand;
-            const partNotInMasterData=[]
-
+            // const partNotInMasterData=[]
             for(let res of data.dealers){
                 var pool=await sql.connect(config);
                 dealerId=res.DealerID

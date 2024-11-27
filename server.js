@@ -22,7 +22,7 @@ const swaggerDefinition = {
   },
   servers: [
     {
-      url: 'http://localhost:8093',
+      url: 'http://localhost:8094',
     },
   ],
 };

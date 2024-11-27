@@ -169,6 +169,16 @@ module.exports={
         catch(error){
             res.status(201).json({error:'Data is not fetched'})
         }
+    },
+
+    getAllInfoBasedOnAllLocations:async function (req,res) {
+        try{
+            const result=await dashboardService.getAllInfoBasedOnAllLocations(req.body);
+            res.status(200).json({data:result})
+        }
+        catch(error){
+            res.status(201).json({error:'Data is not fetched'})
+        }
     }
 
 
