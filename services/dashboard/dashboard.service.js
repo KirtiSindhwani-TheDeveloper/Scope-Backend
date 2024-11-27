@@ -655,6 +655,37 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
             console.log("error ",error.message);
             await transaction.rollback();
         }
+    },
+
+    getAllInfoBasedOnAllBrands:async function(req){
+
+        try{
+            
+            var pool=await sql.connect(config);
+            var transaction=new sql.Transaction();
+            await transaction.begin()
+            new sql.Request(transaction);  
+            const [partNotInMasterDetails,noOfRequestApprovedDetails, noOfRequestPendingDetails, noOfRequestRejectedDetails] = await Promise.all([
+
+                // this.getPartNotInMasterOnSelectedLocation(req),
+                // this.getApprovedRequestBasedOnSelectedLocation(req),
+                // this.getPendingRequestOnSelectedLocation(req),
+                // this.getRejectedRequestBasedOnSelectedLocation(req)
+
+            ]);
+            const responseData = {
+                partNotInMasterData: partNotInMasterDetails,
+                noOfRequestPendingData: noOfRequestPendingDetails,
+                noOfRequestApprovedData: noOfRequestApprovedDetails,
+                noOfRequestRejectedData: noOfRequestRejectedDetails,
+              };
+              await transaction.commit();              
+              return responseData
+        }
+        catch(error){
+            console.log("error ",error.message);
+            await transaction.rollback();
+        }
     }
 
 

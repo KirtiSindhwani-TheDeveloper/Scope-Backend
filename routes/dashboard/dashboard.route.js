@@ -20,5 +20,6 @@ router.post('/fetch-data-locations',dashboardController.getAllInfoBasedOnLocatio
 //admin dashboard route
 
  router.post('/fetch-data',dashboardController.getAllInfoBasedAdminDashboard)
+ router.post('/fetch-data-brands',dashboardController.getAllInfoBasedOnAllBrands)
 // router.get('/:brandId/:dealerId',dashboardController.getAllInfoBasedOnDealer)
 module.exports=router;
