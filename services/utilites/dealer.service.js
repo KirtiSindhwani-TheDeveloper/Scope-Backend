@@ -32,10 +32,7 @@ module.exports={
         catch(err){
             console.log("error in fetching data",err.message);
             await transaction.rollback(); 
-        }finally {
-            // Close the SQL Server connection
-            await sql.close();
-          }
+        }
         
     }
 }

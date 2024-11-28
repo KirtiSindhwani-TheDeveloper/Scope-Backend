@@ -21,6 +21,8 @@ const sql=require('mssql')
    options: {
     trustedConnection:true,
     trustServerCertificate:true
-   }
+   },
+   connectionTimeout: 60000, // Timeout for establishing a connection (in ms)
+  requestTimeout: 60000, // Timeout for a query (in ms)
 
  }

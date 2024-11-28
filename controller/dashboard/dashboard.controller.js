@@ -143,7 +143,7 @@ module.exports={
         try{
             const result=await dashboardService.getAllInfoBasedOnLocations(req.body)
             res.status(200).json({data:result})
-            console.log("_______________________",result)
+            // console.log("_______________________",result)
         }catch(error){
             res.status(201).json({error:'Not fetched Successfully'})
         }

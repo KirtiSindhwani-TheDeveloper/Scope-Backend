@@ -21,14 +21,15 @@ module.exports={
              
             dealerId=result1.recordset[0].DealerID;
             // console.log("dealer id ",dealerId)
-            const query=`SELECT distinct a.vcFirstName,a.vcLastName,a.bintId_Pk from AdminMaster_GEN a LEFT JOIN Create_Order_Request_TD001_${dealerId} c ON a.bintId_Pk=c.SCSby where locationID=@locationId and a.btStatus=1 and a.type='A'`;
+            const query=`SELECT distinct a.vcFirstName,a.vcLastName,a.bintId_Pk as userId from AdminMaster_GEN a LEFT JOIN Create_Order_Request_TD001_${dealerId} c ON a.bintId_Pk=c.SCSby where locationID=@locationId and a.btStatus=1 and a.type='A'`;
             const result=await pool.request()
             .input('dealerId',dealerId)
             .input('locationId',locationId).query(query);
             const userList=[]
             for(let i=0;i<result.recordset.length;i++){
                 const userName=result.recordset[i].vcFirstName+" "+result.recordset[i].vcLastName;
-                userList.push(userName)
+                const userId=result.recordset[i].userId
+                userList.push({userName:userName,id:userId})
 
             }
             // console.log("result ",result.recordset)
@@ -45,7 +46,7 @@ module.exports={
     getPendingRequest:async function(req,res){
         try{
             let pool=await sql.connect(config)
-            const transaction= await new sql.Transaction();
+            const transaction= await new sql.Transaction(pool);
             await transaction.begin();
             new sql.Request(transaction)
             dealerId=req.dealer_id;
@@ -105,7 +106,7 @@ module.exports={
         try{
             let pool=await sql.connect(config)
     
-            const transaction= new sql.Transaction();
+            const transaction= await new sql.Transaction(pool);
             await transaction.begin();
             new sql.Request(transaction)
             dealerId=req.dealer_id;
@@ -118,7 +119,7 @@ module.exports={
                     dateQuery+='AND dateadded =getdate()'; 
                 }
                 else if(band==='yesterday'){
-                    dateQuery += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                    dateQuery += ' AND dateadded =DATEADD(DAY, -1, GETDATE())';
                 }
                 else if(band==='last week'){
                     dateQuery += ' AND dateadded > dateadd(DAY,-7,getdate())';
@@ -166,7 +167,7 @@ module.exports={
         try{
             let pool=await sql.connect(config)
     
-            const transaction= new sql.Transaction();
+            const transaction=await new sql.Transaction(pool);
             await transaction.begin();
             new sql.Request(transaction)
             dealerId=req.dealer_id;
@@ -179,7 +180,7 @@ module.exports={
                     dateQuery+='AND dateadded =getdate()'; 
                 }
                 else if(band==='yesterday'){
-                    dateQuery += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                    dateQuery += ' AND dateadded =DATEADD(DAY, -1, GETDATE())';
                 }
                 else if(band==='last week'){
                     dateQuery += ' AND dateadded > dateadd(DAY,-7,getdate())';
@@ -227,7 +228,7 @@ module.exports={
 
         try{
             let pool=await sql.connect(config);
-            let transaction=new sql.Transaction();
+            let transaction=await new sql.Transaction(pool);
             await transaction.begin();
             new sql.Request(transaction)
             dealerId=req.dealer_id;
@@ -240,7 +241,7 @@ module.exports={
                     dateQuery+='AND dateadded =getdate()'; 
                 }
                 else if(band==='yesterday'){
-                    dateQuery += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                    dateQuery += ' AND dateadded =DATEADD(DAY, -1, GETDATE())';
                 }
                 else if(band==='last week'){
                     dateQuery += ' AND dateadded > dateadd(DAY,-7,getdate())';
@@ -285,12 +286,10 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
     getRejectedRequestBasedOnSelectedLocation:async function(req){
         try{
             let pool=await sql.connect(config);
-            let transaction=new sql.Transaction();
+            let transaction=await new sql.Transaction(pool);
             await transaction.begin();
             new sql.Request(transaction)
             locationIdArray=req.location_id;
-            const res=await this.getBrandAndDealerBasedOnLocation(locationIdArray);
-            console.log("dealerId",res)
             dealerId=req.dealer_id;
             timeBand=req?.timeBand;
             let sum=0;
@@ -301,7 +300,7 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
                     dateQuery+='AND dateadded =getdate()'; 
                 }
                 else if(band==='yesterday'){
-                    dateQuery += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                    dateQuery += ' AND dateadded=DATEADD(DAY, -1, GETDATE())';
                 }
                 else if(band==='last week'){
                     dateQuery += ' AND dateadded > dateadd(DAY,-7,getdate())';
@@ -311,11 +310,9 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
                 }
             }
 
-            for(let id of res){
-                dealerId=id.result.DealerID
-                locationId=id.locationId
+            for(let id of locationIdArray){
+                locationId=id
                 // console.log("location ",locationId);
-                 pool=await sql.connect(config);
                 let query1 = `SELECT COUNT(Current_status) as rejected_count  FROM Create_Order_Request_TD001_${dealerId} WHERE LocationID = @locationId AND Current_status = 'Decline'`
                 query1+=dateQuery
                 let result=await pool.request()
@@ -341,7 +338,7 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
     getPendingRequestOnSelectedLocation:async function(req){
         try{
             let pool=await sql.connect(config);
-            let transaction=new sql.Transaction(pool);
+            let transaction=await new sql.Transaction(pool);
             await transaction.begin();
             new sql.Request(transaction)
             locationIdArray=req.location_id;
@@ -353,7 +350,7 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
                     dateQuery+='AND dateadded =getdate()'; 
                 }
                 else if(band==='yesterday'){
-                    dateQuery += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                    dateQuery += ' AND dateadded =DATEADD(DAY, -1, GETDATE())';
                 }
                 else if(band==='last week'){
                     dateQuery += ' AND dateadded > dateadd(DAY,-7,getdate())';
@@ -362,13 +359,10 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
                     dateQuery += ' AND dateadded > dateadd(month,-1,getdate()) ';
                 }
             }
-            const res=await this.getBrandAndDealerBasedOnLocation(locationIdArray);
-            console.log("dealerId",res)
             dealerId=req.dealer_id;
             let sum=0;
-            for(let id of res){
-                dealerId=id.result.DealerID
-                locationId=id.locationId
+            for(let id of locationIdArray){
+                locationId=id
                 // console.log("location ",locationId);
                 
                 let query1 = 
@@ -379,7 +373,7 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
                 .input('dealerId',dealerId)
                 .query(query1);
                 sum+=result.recordset[0].pending_request_count
-                partNotInMasterData.push(result.recordset[0]);
+                // partNotInMasterData.push(result.recordset[0]);
                 // console.log("result ",result.recordset)
             }
             const pendingRequests={
@@ -402,9 +396,8 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
             await transaction.begin();
             new sql.Request(transaction)
             locationIdArray=req.location_id;
-            const res=await this.getBrandAndDealerBasedOnLocation(locationIdArray);
             // console.log("dealerId",res)
-            // dealerId=req.dealer_id;
+             dealerId=req.dealer_id;
             timeBand=req?.timeBand;
             let sum=0;
             let dateQuery='';
@@ -414,7 +407,7 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
                     dateQuery+='AND dateadded =getdate()'; 
                 }
                 else if(band==='yesterday'){
-                    dateQuery += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                    dateQuery += ' AND dateadded=DATEADD(DAY, -1, GETDATE())';
                 }
                 else if(band==='last week'){
                     dateQuery += ' AND dateadded > dateadd(DAY,-7,getdate())';
@@ -424,9 +417,9 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
                 }
             }
           
-            for(let id of res){
-                dealerId=id.result.DealerID
-                locationId=id.locationId
+            for(let id of locationIdArray){
+               
+                locationId=id
                 // console.log("location ",locationId);
                 
                 let query1 = `SELECT Count(Current_status) as approved_count FROM Create_Order_Request_TD001_${dealerId} WHERE LocationID = @locationId AND Current_status = 'Approve'`;
@@ -454,7 +447,7 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
     getPartNotInMasterOnSelectedLocation:async function(req){
         try{
             let pool=await sql.connect(config);
-            let transaction=new sql.Transaction(pool);
+            let transaction=await new sql.Transaction(pool);
             await transaction.begin();
             new sql.Request(transaction)
             locationIdArray=req?.location_id;
@@ -466,7 +459,7 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
                     dateQuery+='AND dateadded =getdate()'; 
                 }
                 else if(band==='yesterday'){
-                    dateQuery += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                    dateQuery += ' AND dateadded=DATEADD(DAY, -1, GETDATE())';
                 }
                 else if(band==='last week'){
                     dateQuery += ' AND dateadded > dateadd(DAY,-7,getdate())';
@@ -475,14 +468,12 @@ SELECT COUNT(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_$
                     dateQuery += ' AND dateadded > dateadd(month,-1,getdate()) ';
                 }
             }
-            const res=await this.getBrandAndDealerBasedOnLocation(locationIdArray);
-            // console.log("dealerId",res)
             dealerId=req.dealer_id
             let sum=0;
-            for(let id of res){
-                locationId=id.locationId
+            for(let id of locationIdArray){
+                locationId=id
                 // console.log("location ",locationId);
-                dealerId=id.result.DealerID
+               
                 let query = `SELECT Count(Yellow_line) as yellow_line_count FROM Create_Order_Request_TD001_${dealerId} WHERE LocationID = @locationId and Yellow_line=1`;
                 query+=dateQuery;
                 let result=await pool.request()

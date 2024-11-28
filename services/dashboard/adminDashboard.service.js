@@ -44,7 +44,7 @@ module.exports={
                         query+='AND dateadded =getdate()'; 
                     }
                     else if(band==='yesterday'){
-                        query += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                        query += ' AND dateadded =DATEADD(DAY, -1, GETDATE())';
                     }
                     else if(band==='last week'){
                         query += ' AND dateadded > dateadd(DAY,-7,getdate())';
@@ -116,7 +116,7 @@ module.exports={
                        query+='AND dateadded =getdate()'; 
                    }
                    else if(band==='yesterday'){
-                       query += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                       query += ' AND dateadded =DATEADD(DAY, -1, GETDATE())';
                    }
                    else if(band==='last week'){
                        query += ' AND dateadded > dateadd(DAY,-7,getdate())';
@@ -187,7 +187,7 @@ module.exports={
                        query+='AND dateadded =getdate()'; 
                    }
                    else if(band==='yesterday'){
-                       query += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                       query += ' AND dateadded =DATEADD(DAY, -1, GETDATE())';
                    }
                    else if(band==='last week'){
                        query += ' AND dateadded > dateadd(DAY,-7,getdate())';
@@ -260,7 +260,7 @@ module.exports={
                        query+='AND dateadded =getdate()'; 
                    }
                    else if(band==='yesterday'){
-                       query += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                       query += ' AND dateadded =DATEADD(DAY, -1, GETDATE())';
                    }
                    else if(band==='last week'){
                        query += ' AND dateadded > dateadd(DAY,-7,getdate())';
@@ -336,7 +336,7 @@ module.exports={
                         query+='AND dateadded =getdate()'; 
                     }
                     else if(band==='yesterday'){
-                        query += ' AND dateadded >DATEADD(DAY, -1, GETDATE())';
+                        query += ' AND dateadded =DATEADD(DAY, -1, GETDATE())';
                     }
                     else if(band==='last week'){
                         query += ' AND dateadded > dateadd(DAY,-7,getdate())';
